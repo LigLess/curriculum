@@ -241,7 +241,6 @@ function renderHome(){
   <header class="home-head">
     <span class="eyebrow">KOREA AI CAMPUS · CURRICULUM</span>
     <h1>AI캠퍼스 과정 커리큘럼</h1>
-    <p>과정을 누르면 소개, 추천 대상, 회차별 커리큘럼, 강사 정보를 볼 수 있습니다. 과정 페이지에서 인쇄하거나 PDF로 저장하면 내용이 빠짐없이 나옵니다.</p>
     <div class="stats"><span><b>${C.filter(c=>!c.deck).length}</b>개 과정</span><span><b>${DEPTS.length}</b>개 학과</span>${C.some(c=>c.deck)?`<span><b>${C.filter(c=>c.deck).length}</b>개 강의안</span>`:''}</div>
     <div class="tools">
       <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -339,7 +338,6 @@ function renderCourse(id){
       ${c.summary?`<p class="c-sum">${esc(c.summary)}</p>`:''}
       ${c.deck?'':`<dl class="facts">${facts.map(f=>`<div><dt>${f[0]}</dt><dd>${f[1]}</dd></div>`).join('')}</dl>`}
       ${metaRows.length?`<table class="metatable">${metaRows.map(r=>`<tr><th>${esc(r[0])}</th><td>${esc(r[1])}</td></tr>`).join('')}</table>`:''}
-      <p class="print-tip">인쇄나 PDF 저장은 브라우저의 인쇄 메뉴(Ctrl + P)를 쓰면 됩니다. 이 과정 내용만 깔끔하게 나옵니다.</p>
       ${c.deck ? `<div class="slides">${c.slides.map((s,j)=>`<figure><img src="${esc(s)}" alt="슬라이드 ${j+1}"><figcaption>${String(j+1).padStart(2,'0')} / ${c.slides.length}</figcaption></figure>`).join('')}</div>`
                : `<div class="prose">${h}</div>`}
       <nav class="pager">
