@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>건축 포트폴리오와 힉스필드</title>
+<meta name="description" content="건축 포트폴리오에서 3D 뷰어와 힉스필드(Higgsfield)가 각각 맡는 역할, 그리고 GPT-6 아스트라와의 관계를 설명하는 자료">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<script>document.documentElement.classList.add('js')</script>
+<style>
+:root{
+  --bg:#ffffff; --bg2:#f6f7f8; --ink:#111418; --ink2:#3b424a; --mute:#868e96; --line:#e7e9ec;
+  --accent:#2f5bff; --accent2:#00b2a9; --accent-soft:#eef2ff;
+  --f:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.75;
+  letter-spacing:-.01em;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:1160px;margin:0 auto;padding-inline:max(20px,env(safe-area-inset-left,0px))}
+h1,h2,h3{margin:0;text-wrap:balance;letter-spacing:-.035em}
+p{margin:0;max-width:62ch}
+.label{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.grad{background:linear-gradient(100deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+section{padding-block:120px 0}
+.sec-head{display:grid;gap:16px;margin-bottom:48px}
+h2{font-size:clamp(28px,4vw,46px);line-height:1.25;font-weight:800}
+.sub{font-size:18px;color:var(--ink2)}
+
+/* ===== reveal (스르륵) ===== */
+.js .rv{opacity:0;transform:translateY(42px);filter:blur(6px);transition:opacity 1s var(--ease),transform 1s var(--ease),filter 1s var(--ease)}
+.js .rv.in{opacity:1;transform:none;filter:none}
+.js .stagger>*{opacity:0;transform:translateY(36px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.js .stagger.in>*{opacity:1;transform:none}
+.stagger.in>*:nth-child(2){transition-delay:.12s}.stagger.in>*:nth-child(3){transition-delay:.24s}
+.stagger.in>*:nth-child(4){transition-delay:.36s}.stagger.in>*:nth-child(5){transition-delay:.48s}
+.stagger.in>*:nth-child(6){transition-delay:.6s}
+/* line mask headline */
+.mask{display:block;overflow:hidden;padding-bottom:.06em}
+.mask>span{display:inline-block}
+.js .mask>span{transform:translateY(110%);transition:transform 1.2s var(--ease)}
+.js .loaded .mask>span{transform:none}
+.js .loaded .mask:nth-child(2)>span{transition-delay:.12s}
+.js .loaded .mask:nth-child(3)>span{transition-delay:.24s}
+
+/* ===== nav ===== */
+.nav{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.82);backdrop-filter:saturate(1.6) blur(14px);-webkit-backdrop-filter:saturate(1.6) blur(14px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;justify-content:space-between;align-items:center;height:60px;gap:16px}
+.brand{font-weight:800;font-size:16px;letter-spacing:-.02em}
+.brand b{color:var(--accent)}
+.nav a{color:var(--ink2);text-decoration:none;font-size:14px;font-weight:500}
+.nav nav{display:flex;gap:22px}
+.progress{position:absolute;left:0;bottom:-1px;height:2px;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+/* ===== hero ===== */
+.hero{padding-block:72px 0;position:relative}
+.hero::before{content:"";position:absolute;inset:-120px -40% auto;height:720px;z-index:-1;
+  background:radial-gradient(40% 50% at 70% 40%,rgba(47,91,255,.10),transparent 70%),radial-gradient(30% 40% at 85% 70%,rgba(0,178,169,.10),transparent 70%)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:56px;align-items:center}
+.hero h1{font-size:clamp(38px,6vw,72px);line-height:1.14;font-weight:900}
+.hero-copy{display:grid;gap:26px}
+.lede{font-size:19px;color:var(--ink2);line-height:1.7}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:13px;font-weight:600;padding:7px 14px;border-radius:999px;background:var(--bg2);color:var(--ink2)}
+.chip.on{background:var(--ink);color:#fff}
+
+.viewer{position:relative;background:linear-gradient(180deg,#fbfcfd,#f1f3f6);border:1px solid var(--line);border-radius:24px;aspect-ratio:4/3.3;max-width:100%;overflow:hidden;touch-action:none;
+  box-shadow:0 40px 80px -40px rgba(17,20,24,.25)}
+.viewer canvas{display:block;width:100%!important;height:100%!important;cursor:grab}
+.viewer canvas:active{cursor:grabbing}
+.v-head{position:absolute;left:18px;top:16px;right:18px;display:flex;justify-content:space-between;gap:8px;pointer-events:none;font-size:12px;font-weight:600;color:var(--mute);letter-spacing:.08em}
+.v-head .live{display:flex;gap:8px;align-items:center;color:var(--ink)}
+.v-head .live i{width:8px;height:8px;border-radius:50%;background:var(--accent2);box-shadow:0 0 0 0 rgba(0,178,169,.5);animation:ping 1.8s infinite}
+@keyframes ping{70%{box-shadow:0 0 0 10px rgba(0,178,169,0)}100%{box-shadow:0 0 0 0 rgba(0,178,169,0)}}
+.axis{font-variant-numeric:tabular-nums}
+.v-hint{position:absolute;left:50%;bottom:72px;transform:translateX(-50%);font-size:13px;font-weight:600;background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;pointer-events:none;transition:opacity .6s;white-space:nowrap;animation:bob 2.2s var(--ease) infinite}
+@keyframes bob{50%{transform:translate(-50%,-6px)}}
+.v-hint.off{opacity:0}
+.v-btns{position:absolute;left:14px;right:14px;bottom:14px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.v-btns button{font-family:var(--f);font-size:13px;font-weight:600;background:rgba(255,255,255,.9);color:var(--ink2);border:1px solid var(--line);padding:8px 14px;border-radius:999px;cursor:pointer;transition:all .25s var(--ease)}
+.v-btns button:hover{border-color:var(--ink);color:var(--ink)}
+.v-btns button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* marquee */
+.marquee{margin-top:96px;border-block:1px solid var(--line);overflow:hidden;padding-block:18px}
+.marquee .track{display:flex;gap:48px;width:max-content;animation:mq 30s linear infinite;font-size:clamp(20px,2.6vw,30px);font-weight:800;color:#c9ced4;letter-spacing:-.03em;white-space:nowrap}
+.marquee .track span b{color:var(--ink)}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+/* ===== definition ===== */
+.def{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px;align-items:start}
+.def-text{display:grid;gap:18px;font-size:17px;color:var(--ink2)}
+.timeline{display:grid;gap:12px}
+.tl{display:grid;grid-template-columns:96px minmax(0,1fr);gap:18px;padding:20px 22px;border:1px solid var(--line);border-radius:18px;background:#fff;transition:transform .4s var(--ease),box-shadow .4s var(--ease)}
+.tl:hover{transform:translateY(-4px);box-shadow:0 20px 40px -24px rgba(17,20,24,.2)}
+.tl dt{font-size:14px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.tl dd{margin:0;font-size:15px;color:var(--ink2)}
+.tl dd b{color:var(--ink);display:block;font-size:16px;margin-bottom:2px}
+
+/* ===== flow ===== */
+.flow{background:var(--bg2);border-radius:28px;padding:clamp(20px,4vw,44px);overflow-x:auto}
+.flow svg{display:block;width:100%;min-width:560px;height:auto}
+.flow text{font-family:var(--f);fill:var(--ink)}
+.flow .sm{font-size:12px;fill:var(--mute);font-weight:500}
+.flow .bx{fill:#fff;stroke:var(--line);stroke-width:1.4}
+.flow .bx.hi{fill:url(#hiG);stroke:none}
+.flow .wire{stroke:#c3c9d1;stroke-width:1.6;fill:none;stroke-dasharray:400;stroke-dashoffset:400;transition:stroke-dashoffset 1.6s var(--ease)}
+.flow.in .wire{stroke-dashoffset:0}
+.flow .wire.d{stroke-dasharray:5 6;stroke-dashoffset:0;opacity:0;transition:opacity 1s .6s}
+.flow.in .wire.d{opacity:1}
+.flow .node{opacity:0;transform:translateY(14px);transition:opacity .8s var(--ease),transform .8s var(--ease);transform-box:fill-box}
+.flow.in .node{opacity:1;transform:none}
+.flow.in .node.n2{transition-delay:.25s}.flow.in .node.n3{transition-delay:.5s}.flow.in .node.n4{transition-delay:.8s}
+.flow .pulse{fill:var(--accent);opacity:0;transition:opacity .4s 1.4s}
+.flow.in .pulse{opacity:1}
+.flow-cap{font-size:15px;color:var(--ink2);margin-top:20px}
+
+/* ===== compare ===== */
+.compare{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}
+.card{background:#fff;border:1px solid var(--line);border-radius:24px;overflow:hidden;display:grid;grid-template-rows:auto 1fr;transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
+.card:hover{transform:translateY(-6px);box-shadow:0 40px 70px -40px rgba(17,20,24,.28)}
+.card .screen{position:relative;aspect-ratio:16/10;max-width:100%;overflow:hidden}
+.card .screen canvas{display:block;width:100%!important;height:100%!important}
+.card .body{padding:26px 28px 28px;display:grid;gap:14px;align-content:start}
+.tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;padding:5px 12px;border-radius:999px;justify-self:start}
+.tag.a{background:var(--bg2);color:var(--ink2)} .tag.b{background:var(--accent-soft);color:var(--accent)}
+.card h3{font-size:22px;font-weight:800}
+.card ul{margin:0;padding:0;list-style:none;display:grid;gap:10px;font-size:15px;color:var(--ink2)}
+.card li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;padding-top:10px;border-top:1px solid var(--line)}
+.card li b{font-size:13px;font-weight:700;color:var(--mute);padding-top:1px}
+.card li.yes span{color:var(--accent);font-weight:700}
+.bars{position:absolute;inset:0;pointer-events:none}
+.bars::before,.bars::after{content:"";position:absolute;left:0;right:0;height:9%;background:#000}
+.bars::before{top:0}.bars::after{bottom:0}
+.rec,.lock,.shot{position:absolute;font-size:11.5px;font-weight:600;color:#fff;letter-spacing:.08em;text-shadow:0 1px 3px rgba(0,0,0,.6);font-variant-numeric:tabular-nums}
+.rec{left:14px;top:calc(9% + 10px);display:flex;gap:8px;align-items:center}
+.rec i{width:7px;height:7px;border-radius:50%;background:#ff4a3d;animation:blink 1.2s steps(2) infinite}
+.lock{right:14px;top:calc(9% + 10px);opacity:.85}
+.shot{right:14px;bottom:calc(9% + 10px);padding:3px 9px;border:1px solid rgba(255,255,255,.5);border-radius:4px}
+@keyframes blink{to{opacity:.15}}
+
+/* table */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:20px;margin-top:24px;background:#fff}
+table{border-collapse:collapse;width:100%;min-width:600px;font-size:15px}
+th,td{text-align:left;padding:16px 22px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;font-weight:700;letter-spacing:.06em;color:var(--mute);background:var(--bg2)}
+tbody tr{transition:background .25s}
+tbody tr:hover{background:#fafbfc}
+tbody tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+.pill{display:inline-block;font-size:12.5px;font-weight:700;padding:3px 11px;border-radius:999px;background:var(--bg2);color:var(--mute);white-space:nowrap}
+.pill.y{background:var(--accent);color:#fff}
+
+/* ===== steps ===== */
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;position:relative}
+.steps::before{content:"";position:absolute;left:0;right:0;top:22px;height:2px;background:var(--line)}
+.steps::after{content:"";position:absolute;left:0;top:22px;height:2px;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 1.8s var(--ease)}
+.steps.in::after{width:100%}
+.step{display:grid;gap:10px;align-content:start;position:relative;padding-top:0}
+.step .n{width:46px;height:46px;border-radius:50%;background:#fff;border:2px solid var(--line);display:grid;place-items:center;font-weight:800;font-size:15px;position:relative;z-index:1;transition:all .6s var(--ease)}
+.steps.in .step .n{border-color:var(--accent);color:var(--accent)}
+.steps.in .step:nth-child(2) .n{transition-delay:.45s}.steps.in .step:nth-child(3) .n{transition-delay:.9s}.steps.in .step:nth-child(4) .n{transition-delay:1.35s}
+.step h3{font-size:19px;font-weight:800;margin-top:10px}
+.step p{font-size:15px;color:var(--ink2)}
+.step .who{font-size:12.5px;font-weight:700;color:var(--mute)}
+.step .who.h{color:var(--accent)}
+
+/* ===== final ===== */
+.final{border-radius:32px;padding:clamp(32px,6vw,72px);display:grid;gap:22px;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#f3f6ff 0%,#ffffff 50%,#ecfbfa 100%);border:1px solid var(--line)}
+.final h2{font-size:clamp(30px,4.6vw,54px)}
+.final p{font-size:18px;color:var(--ink2)}
+.say{font-size:clamp(19px,2.3vw,24px);font-weight:700;color:var(--ink)!important;line-height:1.6;padding-left:22px;border-left:3px solid var(--accent)}
+.src{font-size:13.5px;color:var(--mute);display:grid;gap:6px;padding-block:44px 80px}
+.src a{color:var(--mute);text-underline-offset:3px}
+.src a:hover{color:var(--ink)}
+
+@media (max-width:900px){
+  .hero-grid,.def,.compare{grid-template-columns:minmax(0,1fr)}
+  .steps{grid-template-columns:minmax(0,1fr) minmax(0,1fr);row-gap:36px}
+  .steps::before,.steps::after{display:none}
+  .nav nav{display:none}
+  section{padding-block:88px 0}
+}
+@media (max-width:480px){.steps{grid-template-columns:minmax(0,1fr)} .lede{font-size:17px}}
+@media (prefers-reduced-motion:reduce){
+  .js .rv,.js .stagger>*,.js .mask>span{opacity:1!important;transform:none!important;filter:none!important;transition:none!important}
+  .marquee .track,.v-hint,.rec i,.v-head .live i{animation:none}
+  .flow .wire{stroke-dashoffset:0}.flow .node{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <div class="brand">Archi <b>×</b> AI</div>
+    <nav aria-label="목차">
+      <a href="#what">힉스필드란</a><a href="#relation">아스트라와의 관계</a><a href="#compare">비교</a><a href="#steps">제작 순서</a>
+    </nav>
+  </div>
+  <div class="progress" id="progress"></div>
+</header>
+
+<main>
+  <div class="wrap hero" id="hero">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <span class="label rv">Architecture Portfolio × AI</span>
+        <h1>
+          <span class="mask"><span>돌려보는 건 3D 뷰어,</span></span>
+          <span class="mask"><span>영화처럼 보여주는 건</span></span>
+          <span class="mask"><span class="grad">힉스필드</span></span>
+        </h1>
+        <p class="lede rv">건축 포트폴리오를 시각적으로 강하게 만들려면 두 가지가 필요합니다. 심사자가 직접 건물을 위·아래·좌·우로 돌려보는 기능, 그리고 첫 화면에서 시선을 잡는 시네마틱 영상입니다. 이 둘은 서로 다른 도구가 맡습니다.</p>
+        <div class="chips rv"><span class="chip on">3D 뷰어 = 조작</span><span class="chip">힉스필드 = 연출</span><span class="chip">아스트라 = 지시</span></div>
+      </div>
+      <div class="viewer rv" id="viewer">
+        <div class="v-head"><span class="live"><i></i>INTERACTIVE 3D</span><span class="axis" id="axis">AZ 045° · EL 28°</span></div>
+        <div class="v-hint" id="hint">드래그해서 돌려보세요</div>
+        <div class="v-btns" role="group" aria-label="시점 바꾸기">
+          <button type="button" id="b-persp" aria-pressed="true">투시</button>
+          <button type="button" id="b-front" aria-pressed="false">정면</button>
+          <button type="button" id="b-side" aria-pressed="false">측면</button>
+          <button type="button" id="b-top" aria-pressed="false">위에서</button>
+          <button type="button" id="b-low" aria-pressed="false">아래에서</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="track">
+      <span><b>ORBIT</b> 건물 주위를 도는 카메라</span><span><b>CRANE UP</b> 위로 솟는 시점</span><span><b>DOLLY IN</b> 내부로 들어가는 시선</span><span><b>FPV</b> 드론 비행 시점</span><span><b>IMAGE → 3D</b> 스케치를 모델로</span>
+      <span><b>ORBIT</b> 건물 주위를 도는 카메라</span><span><b>CRANE UP</b> 위로 솟는 시점</span><span><b>DOLLY IN</b> 내부로 들어가는 시선</span><span><b>FPV</b> 드론 비행 시점</span><span><b>IMAGE → 3D</b> 스케치를 모델로</span>
+    </div>
+  </div>
+
+  <!-- WHAT -->
+  <section id="what">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="label rv">01 · 힉스필드란</span>
+        <h2 class="rv">사진 한 장으로 영화 같은<br>카메라 무빙을 만드는 AI</h2>
+      </div>
+      <div class="def">
+        <div class="def-text stagger">
+          <p>힉스필드(Higgsfield)는 이미지나 문장을 넣으면 짧은 영상으로 만들어 주는 AI 영상 플랫폼입니다. 가장 큰 강점은 카메라 움직임입니다.</p>
+          <p>드론처럼 건물 주위를 도는 장면, 크레인처럼 위로 올라가는 장면, 내부로 밀고 들어가는 장면을 촬영 장비 없이 만들 수 있습니다. 40가지가 넘는 영화식 카메라 무빙이 프리셋으로 준비되어 있습니다.</p>
+          <p>2026년에는 영상을 넘어 모션그래픽, 그리고 2D 그림을 3D 모델로 바꾸는 기능까지 범위를 넓혔습니다.</p>
+        </div>
+        <dl class="timeline stagger">
+          <div class="tl"><dt>2026.02</dt><dd><b>Vibe Motion</b>채팅으로 모션그래픽 제작. 힉스필드 사이트 안에서 단독으로 동작합니다.</dd></div>
+          <div class="tl"><dt>2026.09</dt><dd><b>AI 모션 디자이너</b>GPT-6 아스트라가 힉스필드 연결(MCP)을 통해 애프터 이펙트를 조작합니다.</dd></div>
+          <div class="tl"><dt>2026.09</dt><dd><b>블렌더 3D 연동</b>2D 그림을 편집 가능한 3D 모델로 바꿔 블렌더에 넣어 줍니다.</dd></div>
+          <div class="tl"><dt>기본 기능</dt><dd><b>카메라 무빙 프리셋</b>오빗, 크레인, 돌리, FPV 드론 시점 등 40종 이상</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- RELATION -->
+  <section id="relation">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="label rv">02 · 아스트라와 힉스필드의 관계</span>
+        <h2 class="rv">아스트라는 <span class="grad">지시</span>하고,<br>힉스필드는 <span class="grad">만듭니다</span></h2>
+        <p class="sub rv">"아스트라로만 된다"는 말은 반만 맞습니다. 아스트라 경로에서도 실제로 영상과 3D를 만들어 내는 쪽은 힉스필드이고, 힉스필드는 아스트라 없이 단독으로도 쓸 수 있습니다.</p>
+      </div>
+      <div class="flow rv" id="flow">
+        <svg viewBox="0 0 900 260" role="img" aria-label="아스트라가 MCP를 통해, 또는 사용자가 직접 힉스필드에 요청하고, 힉스필드가 영상, 모션그래픽, 3D 모델을 만든다.">
+          <defs>
+            <linearGradient id="hiG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f5bff"/><stop offset="1" stop-color="#00b2a9"/></linearGradient>
+            <path id="w1" d="M210 80 C300 80 300 115 372 115"/>
+            <path id="w2" d="M210 190 C300 190 300 155 372 155"/>
+            <path id="w3" d="M580 135 C630 135 630 52 690 52"/>
+            <path id="w4" d="M580 135 H690"/>
+            <path id="w5" d="M580 135 C630 135 630 218 690 218"/>
+          </defs>
+          <use href="#w1" class="wire"/><use href="#w2" class="wire"/>
+          <use href="#w3" class="wire"/><use href="#w4" class="wire"/><use href="#w5" class="wire"/>
+
+          <g class="node">
+            <rect x="20" y="48" width="190" height="64" rx="16" class="bx"/>
+            <text x="115" y="77" text-anchor="middle" font-size="16" font-weight="700">GPT-6 아스트라</text>
+            <text x="115" y="97" text-anchor="middle" class="sm">지시하는 두뇌 · 선택 사항</text>
+          </g>
+          <g class="node">
+            <rect x="20" y="158" width="190" height="64" rx="16" class="bx"/>
+            <text x="115" y="187" text-anchor="middle" font-size="16" font-weight="700">사용자 직접 입력</text>
+            <text x="115" y="207" text-anchor="middle" class="sm">힉스필드 단독 사용</text>
+          </g>
+          <g class="node n2">
+            <text x="292" y="78" text-anchor="middle" class="sm">MCP 연결</text>
+            <text x="292" y="204" text-anchor="middle" class="sm">프롬프트</text>
+            <rect x="372" y="78" width="208" height="114" rx="22" class="bx hi"/>
+            <text x="476" y="128" text-anchor="middle" font-size="22" font-weight="800" style="fill:#fff">힉스필드</text>
+            <text x="476" y="152" text-anchor="middle" font-size="12.5" style="fill:rgba(255,255,255,.85)">실제 생성 엔진</text>
+            <text x="476" y="170" text-anchor="middle" font-size="12.5" style="fill:rgba(255,255,255,.85)">영상 · 모션 · 3D</text>
+          </g>
+          <g class="node n3"><rect x="690" y="28" width="190" height="48" rx="14" class="bx"/><text x="785" y="57" text-anchor="middle" font-size="14.5" font-weight="700">시네마틱 건물 영상</text></g>
+          <g class="node n3"><rect x="690" y="111" width="190" height="48" rx="14" class="bx"/><text x="785" y="140" text-anchor="middle" font-size="14.5" font-weight="700">모션그래픽 · 타이포</text></g>
+          <g class="node n4"><rect x="690" y="194" width="190" height="48" rx="14" class="bx"/><text x="785" y="223" text-anchor="middle" font-size="14.5" font-weight="700">스케치 → 3D 모델</text></g>
+
+          <circle r="5" class="pulse"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#w1"/></animateMotion></circle>
+          <circle r="5" class="pulse" style="fill:#00b2a9"><animateMotion dur="2.4s" begin="1.2s" repeatCount="indefinite"><mpath href="#w2"/></animateMotion></circle>
+          <circle r="5" class="pulse"><animateMotion dur="2s" begin=".4s" repeatCount="indefinite"><mpath href="#w3"/></animateMotion></circle>
+          <circle r="5" class="pulse"><animateMotion dur="2s" begin="1s" repeatCount="indefinite"><mpath href="#w4"/></animateMotion></circle>
+          <circle r="5" class="pulse"><animateMotion dur="2s" begin="1.6s" repeatCount="indefinite"><mpath href="#w5"/></animateMotion></circle>
+        </svg>
+        <p class="flow-cap">어느 경로로 들어가든 결과물은 힉스필드를 거쳐 나옵니다. 아스트라는 있으면 편한 조작자이고, 생성 자체는 힉스필드의 몫입니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARE -->
+  <section id="compare">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="label rv">03 · 같은 건물, 두 가지 보여주기</span>
+        <h2 class="rv">직접 돌려보기와 영상 연출은<br>서로 다른 결과물입니다</h2>
+      </div>
+      <div class="compare stagger">
+        <article class="card">
+          <div class="screen" id="cmpA" style="background:linear-gradient(180deg,#fbfcfd,#eef1f4)"></div>
+          <div class="body">
+            <span class="tag a">3D 뷰어 · 인터랙티브</span>
+            <h3>보는 사람이 직접 조작</h3>
+            <ul>
+              <li><b>재료</b><span>스케치업·라이노·레빗 모델을 .glb로 내보낸 파일</span></li>
+              <li><b>도구</b><span>Three.js, model-viewer, Sketchfab, Spline 같은 웹 3D 뷰어</span></li>
+              <li><b>강점</b><span>평면·입면·단면 관계를 심사자가 원하는 각도로 확인</span></li>
+              <li><b>AI</b><span>필요 없음</span></li>
+            </ul>
+          </div>
+        </article>
+        <article class="card">
+          <div class="screen" id="cmpB" style="background:#0d1012">
+            <div class="bars"></div>
+            <div class="rec"><i></i><span id="tc">REC 00:00:00</span></div>
+            <div class="lock">재생 전용</div>
+            <div class="shot" id="shot">ORBIT</div>
+          </div>
+          <div class="body">
+            <span class="tag b">힉스필드 · 시네마틱 영상</span>
+            <h3>감독이 정한 카메라로 연출</h3>
+            <ul>
+              <li><b>재료</b><span>렌더 이미지, 모형 사진, 스케치 한 장</span></li>
+              <li><b>도구</b><span>힉스필드 카메라 무빙 프리셋 (오빗·크레인·돌리 인)</span></li>
+              <li><b>강점</b><span>포폴 첫 화면과 프로젝트 소개 영상의 몰입감</span></li>
+              <li class="yes"><b>AI</b><span>필요함 · 힉스필드의 영역</span></li>
+            </ul>
+          </div>
+        </article>
+      </div>
+
+      <div class="tablewrap rv">
+        <table>
+          <thead><tr><th>포트폴리오에서 하고 싶은 것</th><th>담당</th><th>힉스필드</th></tr></thead>
+          <tbody>
+            <tr><td>건물을 마우스로 위·아래·좌·우 회전</td><td>3D 뷰어 + 모델 파일</td><td><span class="pill">필요 없음</span></td></tr>
+            <tr><td>첫 화면에 드론처럼 도는 건물 영상</td><td>힉스필드 카메라 무빙</td><td><span class="pill y">필요</span></td></tr>
+            <tr><td>렌더 한 장을 걸어 들어가는 내부 영상으로</td><td>힉스필드 이미지→영상</td><td><span class="pill y">필요</span></td></tr>
+            <tr><td>손스케치만 있는 작업을 3D 모델로 살리기</td><td>힉스필드 블렌더 연동</td><td><span class="pill y">필요</span></td></tr>
+            <tr><td>프로젝트 제목·개념도를 움직이는 그래픽으로</td><td>힉스필드 Vibe Motion</td><td><span class="pill y">필요</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEPS -->
+  <section id="steps">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="label rv">04 · 실제 제작 순서</span>
+        <h2 class="rv">포트폴리오는 이 순서로 만듭니다</h2>
+      </div>
+      <div class="steps" id="stepsEl">
+        <div class="step stagger"><span class="n">1</span><h3>모델 정리</h3><p>과제에서 만든 스케치업·라이노 모델을 정리하고 .glb로 내보냅니다.</p><span class="who">본인 작업</span></div>
+        <div class="step stagger"><span class="n">2</span><h3>웹에 3D 올리기</h3><p>포폴 사이트에 3D 뷰어를 넣어 심사자가 직접 돌려보게 합니다.</p><span class="who">웹 · 3D 뷰어</span></div>
+        <div class="step stagger"><span class="n">3</span><h3>시네마틱 영상 생성</h3><p>대표 렌더 이미지를 힉스필드에 넣어 오빗·크레인 영상을 뽑습니다.</p><span class="who h">힉스필드</span></div>
+        <div class="step stagger"><span class="n">4</span><h3>첫 화면 배치</h3><p>영상은 메인 상단에 자동 반복, 그 아래에 돌려보는 3D와 도면을 배치합니다.</p><span class="who">웹 · 편집</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <section>
+    <div class="wrap">
+      <div class="final rv">
+        <span class="label">정리</span>
+        <h2>힉스필드는 <span class="grad">보여주는 힘</span>을<br>맡는 주 AI입니다</h2>
+        <p>돌려보는 기능은 3D 뷰어가 하고, 포트폴리오를 영화처럼 연출하는 일은 힉스필드가 합니다. 아스트라를 쓰더라도 실제 영상과 3D를 만드는 건 힉스필드이며, 힉스필드는 단독으로도 모든 생성 기능을 쓸 수 있습니다.</p>
+        <p class="say">건물을 돌려보게 하는 건 기본입니다. 포트폴리오의 차이는 첫 화면의 연출에서 나오고, 그 연출이 힉스필드의 영역입니다.</p>
+      </div>
+      <div class="src">
+        <span class="label" style="color:var(--mute)">출처</span>
+        <a href="https://siliconangle.com/?p=730065" target="_blank" rel="noopener">SiliconANGLE — Higgsfield Vibe Motion 출시 (2026.02)</a>
+        <a href="https://aimatters.co.kr/news-report/53565/" target="_blank" rel="noopener">AI매터스 — 힉스필드 AI 모션 디자이너 (2026.09)</a>
+        <a href="https://runtimewire.com/article/higgsfield-gpt-6-astra-blender-2d-artwork-3d-model" target="_blank" rel="noopener">Runtimewire — 아스트라·블렌더 3D 변환 시연 (2026.09)</a>
+        <a href="https://moge.ai/tw/product/higgsfield" target="_blank" rel="noopener">Moge.ai — 힉스필드 카메라 무빙 기능 소개</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ---- reveal on scroll ---- */
+(function(){
+  const hero = document.getElementById('hero');
+  requestAnimationFrame(()=>setTimeout(()=>hero.classList.add('loaded'),80));
+  const targets = document.querySelectorAll('.rv,.stagger,#flow,#stepsEl');
+  if(!('IntersectionObserver' in window)){ targets.forEach(t=>t.classList.add('in')); return; }
+  const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }),{threshold:.15,rootMargin:'0px 0px -6% 0px'});
+  targets.forEach(t=>io.observe(t));
+  // hero items reveal immediately
+  hero.querySelectorAll('.rv').forEach((el,i)=>setTimeout(()=>el.classList.add('in'),250+i*140));
+  const bar = document.getElementById('progress');
+  addEventListener('scroll',()=>{ const h=document.documentElement; bar.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%'; },{passive:true});
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+  if(!window.THREE) return;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function buildModel(night){
+    const g = new THREE.Group();
+    const concrete = new THREE.MeshStandardMaterial({color: night?0x9da3a0:0xf2f3f1, roughness:.85});
+    const darkc = new THREE.MeshStandardMaterial({color: night?0x4a504e:0xc4c9cc, roughness:.8});
+    const glass = new THREE.MeshStandardMaterial({color:0x8fb2c4, roughness:.1, metalness:.35, transparent:true, opacity:.55});
+    const accent = new THREE.MeshStandardMaterial({color:0x2f5bff, roughness:.5});
+    const edgeMat = new THREE.LineBasicMaterial({color: night?0x1a1e1d:0x58606a, transparent:true, opacity:.45});
+    function box(w,h,d,x,y,z,m,edges=true){
+      const geo = new THREE.BoxGeometry(w,h,d);
+      const mesh = new THREE.Mesh(geo,m); mesh.position.set(x,y,z);
+      mesh.castShadow = true; mesh.receiveShadow = true; g.add(mesh);
+      if(edges){ const l = new THREE.LineSegments(new THREE.EdgesGeometry(geo), edgeMat); l.position.copy(mesh.position); g.add(l); }
+      return mesh;
+    }
+    box(9,.3,7,0,.15,0,darkc);
+    box(5.2,2.4,3.6,-.6,1.5,.2,glass);
+    box(1.4,5.6,1.6,-2.6,3.1,-.6,concrete);
+    for(const [x,z] of [[1.7,1.7],[1.7,-1.4],[-.6,1.7]]) box(.22,2.4,.22,x,1.5,z,concrete);
+    box(7.4,.35,4.2,.8,2.88,.1,concrete);
+    const up = new THREE.Group();
+    const ub = new THREE.Mesh(new THREE.BoxGeometry(6.2,2.2,3),concrete); ub.castShadow=ub.receiveShadow=true; up.add(ub);
+    up.add(new THREE.LineSegments(new THREE.EdgesGeometry(ub.geometry),edgeMat));
+    const win = new THREE.Mesh(new THREE.BoxGeometry(5.4,.7,3.04),glass); win.position.y=.1; up.add(win);
+    for(let i=0;i<14;i++){ const l=new THREE.Mesh(new THREE.BoxGeometry(.06,.7,.08),accent); l.position.set(-2.6+i*.4,.1,1.55); l.castShadow=true; up.add(l); }
+    up.position.set(1.6,4.15,-.2); up.rotation.y = -.18; g.add(up);
+    box(3.2,.25,2.6,-1.6,6.0,-.6,darkc);
+    for(let i=0;i<6;i++) box(1.1,.15,.35,3.6,.3+i*.15,2.6-i*.35,concrete,false);
+    const gr = new THREE.Mesh(new THREE.PlaneGeometry(60,60), new THREE.ShadowMaterial({opacity: night?.35:.12}));
+    gr.rotation.x = -Math.PI/2; gr.receiveShadow = true; g.add(gr);
+    const grid = new THREE.GridHelper(24,24, night?0x3a4240:0xd5dae0, night?0x262c2a:0xe6e9ed);
+    grid.position.y = .001; g.add(grid);
+    return g;
+  }
+  function lights(scene,night){
+    scene.add(new THREE.HemisphereLight(0xffffff, night?0x6a6f6c:0xdfe3e8, night?.7:.85));
+    const sun = new THREE.DirectionalLight(0xfff6ec, night?.9:.75);
+    sun.position.set(8,14,6); sun.castShadow = true; sun.shadow.mapSize.set(1024,1024);
+    Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12});
+    scene.add(sun);
+  }
+  function makeRenderer(el){
+    const r = new THREE.WebGLRenderer({antialias:true, alpha:true});
+    r.setPixelRatio(Math.min(devicePixelRatio,2));
+    r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
+    return r;
+  }
+  function fit(r,cam,el){ const w=el.clientWidth,h=el.clientHeight; if(!w||!h) return; r.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); }
+  function watchVisible(el){ const s={v:true}; new IntersectionObserver(e=>{s.v=e[0].isIntersecting}).observe(el); return s; }
+
+  const target = new THREE.Vector3(.4,2.6,0);
+  const views = { persp:[11,7,11], front:[0,3.2,16], side:[16,3.2,0], top:[0.01,18,0.01], low:[6,0.6,9] };
+
+  function interactive(el, withUI){
+    const scene = new THREE.Scene(); lights(scene,false); scene.add(buildModel(false));
+    const cam = new THREE.PerspectiveCamera(38,1,.1,200); cam.position.set(...views.persp);
+    const r = makeRenderer(el); el.insertBefore(r.domElement, el.firstChild);
+    const c = new THREE.OrbitControls(cam, r.domElement);
+    c.target.copy(target); c.enableDamping = true; c.dampingFactor = .08;
+    c.minDistance = 7; c.maxDistance = 30; c.maxPolarAngle = Math.PI*.495; c.enablePan = false;
+    c.autoRotate = !reduce; c.autoRotateSpeed = .7;
+    let tween = null;
+    const hint = withUI && document.getElementById('hint');
+    const axis = withUI && document.getElementById('axis');
+    const setPressed = id => { if(withUI) document.querySelectorAll('.v-btns button').forEach(b=>b.setAttribute('aria-pressed', b.id==='b-'+id?'true':'false')); };
+    r.domElement.addEventListener('pointerdown',()=>{ c.autoRotate=false; tween=null; if(hint) hint.classList.add('off'); setPressed(null); });
+    if(withUI) Object.keys(views).forEach(k=>{
+      document.getElementById('b-'+k).addEventListener('click',()=>{
+        c.autoRotate=false; setPressed(k); if(hint) hint.classList.add('off');
+        const to = new THREE.Vector3(...views[k]);
+        if(reduce){ cam.position.copy(to); return; }
+        tween = {from:cam.position.clone(), to, t:0};
+      });
+    });
+    new ResizeObserver(()=>fit(r,cam,el)).observe(el); fit(r,cam,el);
+    const vis = watchVisible(el);
+    (function loop(){
+      requestAnimationFrame(loop); if(!vis.v) return;
+      if(tween){ tween.t=Math.min(1,tween.t+.022); const e=1-Math.pow(1-tween.t,3); cam.position.lerpVectors(tween.from,tween.to,e); if(tween.t>=1) tween=null; }
+      c.update();
+      if(axis){ const v=cam.position.clone().sub(c.target); const az=(Math.atan2(v.x,v.z)*180/Math.PI+360)%360; const elv=Math.asin(v.y/v.length())*180/Math.PI;
+        axis.textContent='AZ '+String(Math.round(az)).padStart(3,'0')+'° · EL '+Math.round(elv)+'°'; }
+      r.render(scene,cam);
+    })();
+  }
+
+  function cinematic(el){
+    const scene = new THREE.Scene(); lights(scene,true);
+    scene.background = new THREE.Color(0x1b2024); scene.fog = new THREE.Fog(0x1b2024,18,45);
+    scene.add(buildModel(true));
+    const cam = new THREE.PerspectiveCamera(32,1,.1,200);
+    const r = makeRenderer(el); r.domElement.style.pointerEvents='none'; el.insertBefore(r.domElement, el.firstChild);
+    r.toneMapping = THREE.ACESFilmicToneMapping;
+    new ResizeObserver(()=>fit(r,cam,el)).observe(el); fit(r,cam,el);
+    const tc = document.getElementById('tc'), shot = document.getElementById('shot');
+    const shots = ['ORBIT','CRANE UP','DOLLY IN'];
+    const vis = watchVisible(el); const start = performance.now();
+    function place(t){
+      const seg=Math.floor(t/5)%3, p=(t%5)/5, e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+      if(seg===0){ const a=.4+e*1.6; cam.position.set(Math.sin(a)*15,3.2,Math.cos(a)*15); cam.lookAt(.4,2.6,0); }
+      else if(seg===1){ cam.position.set(-9+e*2,.8+e*10,9-e*2); cam.lookAt(.4,2.4+e*.8,0); }
+      else { cam.position.set(4-e*1.5,2.2,16-e*8); cam.lookAt(1,3.4,0); }
+      shot.textContent = shots[seg];
+    }
+    (function loop(now){
+      requestAnimationFrame(loop); if(!vis.v) return;
+      const t = reduce?1.5:(now-start)/1000; place(t);
+      const s=Math.floor(t), f=Math.floor((t%1)*24);
+      tc.textContent='REC 00:'+String(Math.floor(s/60)%60).padStart(2,'0')+':'+String(s%60).padStart(2,'0')+':'+String(f).padStart(2,'0');
+      r.render(scene,cam);
+    })(performance.now());
+  }
+
+  interactive(document.getElementById('viewer'), true);
+  interactive(document.getElementById('cmpA'), false);
+  cinematic(document.getElementById('cmpB'));
+})();
+</script>
+</body>
+</html>
